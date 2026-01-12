@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "golang.go",
+    "github.copilot",
+    "streetsidesoftware.code-spell-checker",
+    "eamodio.gitlens"
+  ]
+}

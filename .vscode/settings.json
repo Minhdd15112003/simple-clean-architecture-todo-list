@@ -1,0 +1,102 @@
+{
+  // Go Language Server (gopls) Configuration
+  "go.useLanguageServer": true, // bật gopls
+  "gopls": {
+    "ui.semanticTokens": true, // bật tô màu cú pháp nâng cao
+    "ui.completion.usePlaceholders": false, // bật placeholder trong completion
+    "ui.diagnostic.analyses": {
+      "unusedparams": true, // phát hiện tham số không sử dụng
+      "shadow": true, // phát hiện biến bị che khuất
+      "unusedwrite": true, // phát hiện các ghi đè không sử dụng
+      "useany": true // phát hiện các biến kiểu any không sử dụng hiệu quả
+    },
+    "ui.codelenses": {
+      "gc_details": true, // bật codelens để hiển thị chi tiết thu gom rác
+      "generate": true, // bật codelens để tạo mã từ các lệnh go generate
+      "regenerate_cgo": true, // bật codelens để tái tạo mã cgo
+      "test": true, // bật codelens để chạy test
+      "tidy": true, // bật codelens để chạy go mod tidy
+      "upgrade_dependency": true, // bật codelens để nâng cấp dependency
+      "vendor": true // bật tất cả codelens để dễ dàng truy cập các chức năng này
+    }
+  },
+
+  // Auto-formatting
+  "go.formatTool": "goimports", // sử dụng goimports để tự động thêm/xóa import khi format
+  "go.lintOnSave": "workspace",
+  "go.vetOnSave": "workspace",
+  "[go]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit" // tự động sắp xếp import khi lưu
+    },
+    "editor.snippetSuggestions": "top" // ưu tiên gợi ý snippet ở trên cùng
+  },
+  "[go.mod]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit" // tự động sắp xếp import khi lưu
+    }
+  },
+
+  // Testing
+  "go.testFlags": ["-v", "-race"], // thêm cờ
+  "go.testOnSave": false, // tắt chạy test tự động khi lưu
+  "go.coverOnSave": false, // tắt tự động kiểm tra phủ sóng code khi lưu
+  "go.coverageDecorator": {
+    "type": "gutter" // hiển thị phủ sóng code ở gutter
+  },
+
+  // Build & Lint
+  "go.buildOnSave": "off", // tắt build tự động khi lưu
+  "go.lintTool": "golangci-lint", // sử dụng golangci-lint để lint code
+  "go.lintFlags": ["--fast"], // sử dụng chế độ nhanh của golangci-lint
+
+  // Debugging
+  "go.delveConfig": {
+    // cấu hình Delve cho debug
+    "dlvLoadConfig": {
+      // cấu hình tải biến khi debug
+      "followPointers": true, // theo dõi con trỏ khi debug
+      "maxVariableRecurse": 1, // giới hạn độ sâu đệ quy khi hiển thị biến
+      "maxStringLen": 120, // giới hạn độ dài chuỗi hiển thị
+      "maxArrayValues": 64, // giới hạn số phần tử mảng hiển thị
+      "maxStructFields": -1 // không giới hạn số trường struct hiển thị
+    },
+    "apiVersion": 2,
+    "showGlobalVariables": false // ẩn biến toàn cục trong debug để giảm lộn xộn
+  },
+
+  // IntelliSense
+  "go.autocompleteUnimportedPackages": true, // gợi ý import package khi gõ
+  "go.gocodeAutoBuild": true, // tự động build gocode
+  "go.inferGopath": false, // sử dụng go.mod thay vì GOPATH
+
+  // Code Navigation
+  "go.alternateTools": {
+    "go": "go" // đảm bảo sử dụng đúng phiên bản Go đã cài đặt
+  },
+
+  // Editor enhancements
+  "go.addTags": {
+    "tags": "json,xml,yaml", // các tag cần thêm
+    "options": "json=omitempty", // thêm omitempty cho tag json
+    "promptForTags": false, // không hỏi mỗi lần thêm tag
+    "transform": "snakecase" // chuyển camelCase thành snake_case
+  },
+
+  // Inlay hints (like GoLand)
+  "editor.inlayHints.enabled": "on",
+  "go.inlayHints.assignVariableTypes": false, // hỗ trợ đọc code hơn
+  "go.inlayHints.compositeLiteralFields": true, // gợi ý tên trường trong struct literals
+  "go.inlayHints.compositeLiteralTypes": true, // gợi ý kiểu trong composite literals
+  "go.inlayHints.constantValues": true, // hiển thị giá trị hằng số
+  "go.inlayHints.functionTypeParameters": true, // hiển thị kiểu tham số hàm
+  "go.inlayHints.parameterNames": true, // hiển thị tên tham số hàm
+  "go.inlayHints.rangeVariableTypes": true, // hiển thị kiểu biến trong range loops
+
+  // Other useful settings
+  "files.eol": "\n",
+  "files.insertFinalNewline": true, // kiểm tra và thêm dòng mới ở cuối file nếu thiếu
+  "files.trimTrailingWhitespace": true // tự động xóa khoảng trắng thừa ở cuối dòng
+}

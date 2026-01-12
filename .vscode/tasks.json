@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "go: build",
+      "type": "shell",
+      "command": "go",
+      "args": ["build", "-v", "./..."],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$go"]
+    },
+    {
+      "label": "go: run",
+      "type": "shell",
+      "command": "go",
+      "args": ["run", "main.go"],
+      "group": "none",
+      "problemMatcher": ["$go"]
+    },
+    {
+      "label": "go: test",
+      "type": "shell",
+      "command": "go",
+      "args": ["test", "-v", "./..."],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": ["$go"]
+    },
+    {
+      "label": "go: test with coverage",
+      "type": "shell",
+      "command": "go",
+      "args": ["test", "-v", "-coverprofile=coverage.out", "./..."],
+      "group": "test",
+      "problemMatcher": ["$go"]
+    },
+    {
+      "label": "go: mod tidy",
+      "type": "shell",
+      "command": "go",
+      "args": ["mod", "tidy"],
+      "group": "none",
+      "problemMatcher": ["$go"]
+    },
+    {
+      "label": "go: vet",
+      "type": "shell",
+      "command": "go",
+      "args": ["vet", "./..."],
+      "group": "none",
+      "problemMatcher": ["$go"]
+    }
+  ]
+}
