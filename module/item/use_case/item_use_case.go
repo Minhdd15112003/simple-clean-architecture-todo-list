@@ -10,9 +10,18 @@ import (
 
 type ItemStorage interface {
 	GetItem(ctx context.Context, cond map[string]interface{}) (*model.TodoItem, error)
-	GetItems(ctx context.Context, fitter *model.Fitter, paging *common.Paging, moreKeys ...string) ([]model.TodoItem, error)
+	GetItems(
+		ctx context.Context,
+		fitter *model.Fitter,
+		paging *common.Paging,
+		moreKeys ...string,
+	) ([]model.TodoItem, error)
 	CreateItem(ctx context.Context, data *model.TodoItemCreation) error
-	UpdateItem(ctx context.Context, cond map[string]interface{}, itemData *model.TodoItemUpdation) error
+	UpdateItem(
+		ctx context.Context,
+		cond map[string]interface{},
+		itemData *model.TodoItemUpdation,
+	) error
 	DeleteItem(ctx context.Context, cond map[string]interface{}) error
 }
 
@@ -27,7 +36,12 @@ func NewItemUseCase(store ItemStorage) *itemUseCase {
 	}
 }
 
-func (useCase *itemUseCase) GetItems(ctx context.Context, fitter *model.Fitter, paging *common.Paging, moreKeys ...string) ([]model.TodoItem, error) {
+func (useCase *itemUseCase) GetItems(
+	ctx context.Context,
+	fitter *model.Fitter,
+	paging *common.Paging,
+	moreKeys ...string,
+) ([]model.TodoItem, error) {
 	itemData, err := useCase.store.GetItems(ctx, fitter, paging)
 	if err != nil {
 		return nil, common.ErrCannotListEntity(model.EntityName, err)
@@ -54,7 +68,11 @@ func (useCase *itemUseCase) CreateNewItem(ctx context.Context, data *model.TodoI
 	return nil
 }
 
-func (useCase *itemUseCase) UpdateItem(ctx context.Context, id int, data *model.TodoItemUpdation) error {
+func (useCase *itemUseCase) UpdateItem(
+	ctx context.Context,
+	id int,
+	data *model.TodoItemUpdation,
+) error {
 
 	itemData, err := useCase.store.GetItem(ctx, map[string]interface{}{"id": id})
 

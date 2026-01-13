@@ -12,7 +12,8 @@
       "program": "${workspaceFolder}/main.go",
       "env": {
         "APP_NAME": "TODO SOCAL LIST",
-        "DB_CONN": "social-todo-list:minhtit123@tcp(192.168.11.76:3306)/social-todo-list?charset=utf8mb4&parseTime=True&loc=Local"
+        "DB_CONN": "social-todo-list:minhtit123@tcp(192.168.11.76:3306)/social-todo-list?charset=utf8mb4&parseTime=True&loc=Local",
+        "SECRET_KEY": "g0+QwFK2F7R2OrEyFolypI3GZvYaKyu5vY7X0D8E0e8="
       },
       "internalConsoleOptions": "neverOpen"
     }

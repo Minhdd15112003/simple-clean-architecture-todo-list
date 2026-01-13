@@ -4,7 +4,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"social-todo-list/common"
+	"social-todo-list/components/tokenprovider/jwt"
+	"social-todo-list/middleware"
 	"social-todo-list/module/item/handler"
 	ginitem "social-todo-list/module/item/handler/gin_item"
 	"social-todo-list/module/item/storage"
@@ -22,7 +23,10 @@ import (
 )
 
 func main() {
-	db, err := gorm.Open(mysql.Open(os.Getenv("DB_CONN")), &gorm.Config{
+	DB_CONN := os.Getenv("DB_CONN")
+	SECRET_KEY := os.Getenv("SECRET_KEY")
+
+	db, err := gorm.Open(mysql.Open(DB_CONN), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
@@ -37,22 +41,31 @@ func main() {
 		v1.PUT("/upload", upload.Upload(db))
 		users := v1.Group("auth")
 		{
-			// Dependency Injection: Storage -> UseCase -> Service -> Handler
 			storage := userStorage.NewSqlStore(db)
-			md5 := common.NewMd5Hash()                              // layer Data Access/Storage: tương tác với cơ sở dữ liệu
-			useCase := userUseCase.NewRegisterUseCase(storage, md5) // layer Business Logic/UseCase: thực hiện các nghiệp vụ chính của ứng dụng
-			service := handlerUser.NewUserService(useCase)          // layer Interface Adapter/Service: chuyển đổi dữ liệu giữa UseCase và Handler
-			handler := ginuser.NewGinUserHandler(service)           //layer Frameworks/Drivers/Transport: thực hiện giao tiếp với bên ngoài (HTTP, gRPC, ...)
+			tokenprovider := jwt.NewTokenJWTProvider("jwt", SECRET_KEY)
+			useCase := userUseCase.NewAuthUseCase(storage, tokenprovider, 60*60*24*30)
+			service := handlerUser.NewUserService(useCase)
+			handler := ginuser.NewGinUserHandler(service)
 			users.POST("/register", handler.Register)
+			users.POST("/login", handler.Login)
+			users.GET("/profile", middleware.RequiredAuth(storage, tokenprovider), handler.Profile)
 		}
 
 		items := v1.Group("items")
 		{
 			// Dependency Injection: Storage -> UseCase -> Service -> Handler
-			storage := storage.NewSqlStore(db)            // layer Data Access/Storage: tương tác với cơ sở dữ liệu
-			useCase := usecase.NewItemUseCase(storage)    // layer Business Logic/UseCase: thực hiện các nghiệp vụ chính của ứng dụng
-			service := handler.NewItemService(useCase)    // layer Interface Adapter/Service: chuyển đổi dữ liệu giữa UseCase và Handler
-			handler := ginitem.NewGinItemHandler(service) //layer Frameworks/Drivers/Transport: thực hiện giao tiếp với bên ngoài (HTTP, gRPC, ...)
+			storage := storage.NewSqlStore(
+				db,
+			) // layer Data Access/Storage: tương tác với cơ sở dữ liệu
+			useCase := usecase.NewItemUseCase(
+				storage,
+			) // layer Business Logic/UseCase: thực hiện các nghiệp vụ chính của ứng dụng
+			service := handler.NewItemService(
+				useCase,
+			) // layer Interface Adapter/Service: chuyển đổi dữ liệu giữa UseCase và Handler
+			handler := ginitem.NewGinItemHandler(
+				service,
+			) //layer Frameworks/Drivers/Transport: thực hiện giao tiếp với bên ngoài (HTTP, gRPC, ...)
 
 			items.GET("", handler.GetItems)
 			items.GET(":id", handler.GetItem)

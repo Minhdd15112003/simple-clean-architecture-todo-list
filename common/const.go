@@ -1,8 +1,7 @@
 package common
 
 import (
-	"crypto/md5"
-	"encoding/hex"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type TokenPayload struct {
@@ -18,14 +17,18 @@ func (payload TokenPayload) Role() string {
 	return payload.URole
 }
 
-type md5Hash struct{}
-
-func NewMd5Hash() *md5Hash {
-	return &md5Hash{}
+func HashPassword(password string) (string, error) {
+	hasher, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return "", err
+	}
+	return string(hasher), nil
 }
 
-func (h *md5Hash) Hash(data string) string {
-	hasher := md5.New()
-	hasher.Write([]byte(data))
-	return hex.EncodeToString(hasher.Sum(nil))
+func CheckPassword(hashedPassword, password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
+
+const (
+	CurrentUser = "current_user"
+)

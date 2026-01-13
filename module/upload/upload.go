@@ -19,7 +19,11 @@ func Upload(db *gorm.DB) func(ctx *gin.Context) {
 			ctx.JSON(400, common.ErrInvalidRequest(err))
 			return
 		}
-		dst := fmt.Sprintf("static/%d.%s", time.Now().UTC().Nanosecond(), strings.ReplaceAll(fileHeader.Filename, " ", "_"))
+		dst := fmt.Sprintf(
+			"static/%d.%s",
+			time.Now().UTC().Nanosecond(),
+			strings.ReplaceAll(fileHeader.Filename, " ", "_"),
+		)
 		if err := ctx.SaveUploadedFile(fileHeader, dst); err != nil {
 			ctx.JSON(500, common.ErrInvalidRequest(err))
 			return

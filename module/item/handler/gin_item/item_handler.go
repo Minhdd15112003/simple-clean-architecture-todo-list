@@ -32,11 +32,18 @@ func (h *GinItemHandler) GetItems(ctx *gin.Context) {
 	}
 	queryString.Process()
 
-	itemData, err := h.service.GetItems(ctx.Request.Context(), &queryString.Fitter, &queryString.Paging)
+	itemData, err := h.service.GetItems(
+		ctx.Request.Context(),
+		&queryString.Fitter,
+		&queryString.Paging,
+	)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, err)
 	}
-	ctx.JSON(http.StatusOK, common.NewSuccessResponse(itemData, queryString.Fitter, queryString.Paging))
+	ctx.JSON(
+		http.StatusOK,
+		common.NewSuccessResponse(itemData, queryString.Fitter, queryString.Paging),
+	)
 }
 
 func (h *GinItemHandler) GetItem(ctx *gin.Context) {

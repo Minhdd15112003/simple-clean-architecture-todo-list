@@ -14,9 +14,10 @@ type jwtProvider struct {
 	prefix string
 }
 
-func NewTokenJWTProvider(prefix string) *jwtProvider {
+func NewTokenJWTProvider(prefix string, secret string) *jwtProvider {
 	return &jwtProvider{
 		prefix: prefix,
+		secret: secret,
 	}
 }
 
@@ -39,10 +40,13 @@ func (t *jwtProvider) SecretKey() string {
 	return t.secret
 }
 
-func (j *jwtProvider) Gernerate(data tokenprovider.ToKenPayload, expiry int) (tokenprovider.Token, error) {
+func (j *jwtProvider) Gernerate(
+	data tokenprovider.ToKenPayload,
+	expiry int,
+) (tokenprovider.Token, error) {
 	now := time.Now()
 
-	t := jwt.NewWithClaims(jwt.SigningMethodES256, myClaims{
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, myClaims{
 		common.TokenPayload{
 			UId:   data.UserId(),
 			URole: data.Role(),

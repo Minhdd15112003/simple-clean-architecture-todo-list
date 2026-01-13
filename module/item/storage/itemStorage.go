@@ -9,7 +9,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *sqlStore) GetItems(ctx context.Context, fitter *model.Fitter, paging *common.Paging, moreKeys ...string) ([]model.TodoItem, error) {
+func (s *sqlStore) GetItems(
+	ctx context.Context,
+	fitter *model.Fitter,
+	paging *common.Paging,
+	moreKeys ...string,
+) ([]model.TodoItem, error) {
 	var itemData []model.TodoItem
 
 	db := s.db.Table(model.TodoItem{}.TableName()).Where("status <> ?", "Deleted")
@@ -38,7 +43,10 @@ func (s *sqlStore) GetItems(ctx context.Context, fitter *model.Fitter, paging *c
 	return itemData, nil
 }
 
-func (s *sqlStore) GetItem(ctx context.Context, cond map[string]interface{}) (*model.TodoItem, error) {
+func (s *sqlStore) GetItem(
+	ctx context.Context,
+	cond map[string]interface{},
+) (*model.TodoItem, error) {
 	var itemData model.TodoItem
 
 	if err := s.db.Where(cond).Where("status <> ?", "Deleted").First(&itemData).Error; err != nil {
@@ -57,7 +65,11 @@ func (s *sqlStore) CreateItem(ctx context.Context, data *model.TodoItemCreation)
 	return nil
 }
 
-func (s *sqlStore) UpdateItem(ctx context.Context, cond map[string]interface{}, itemData *model.TodoItemUpdation) error {
+func (s *sqlStore) UpdateItem(
+	ctx context.Context,
+	cond map[string]interface{},
+	itemData *model.TodoItemUpdation,
+) error {
 	if err := s.db.Where(cond).Updates(&itemData).Error; err != nil {
 		return common.ErrDB(err)
 	}

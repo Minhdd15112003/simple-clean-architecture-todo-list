@@ -23,8 +23,6 @@
 
   // Auto-formatting
   "go.formatTool": "goimports", // sử dụng goimports để tự động thêm/xóa import khi format
-  "go.lintOnSave": "workspace",
-  "go.vetOnSave": "workspace",
   "[go]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
@@ -85,7 +83,7 @@
     "transform": "snakecase" // chuyển camelCase thành snake_case
   },
 
-  // Inlay hints (like GoLand)
+  // Inlay hints
   "editor.inlayHints.enabled": "on",
   "go.inlayHints.assignVariableTypes": false, // hỗ trợ đọc code hơn
   "go.inlayHints.compositeLiteralFields": true, // gợi ý tên trường trong struct literals

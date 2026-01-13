@@ -8,7 +8,12 @@ import (
 
 type ItemUseCase interface {
 	GetItemByID(ctx context.Context, id int) (*model.TodoItem, error)
-	GetItems(ctx context.Context, fitter *model.Fitter, paging *common.Paging, moreKeys ...string) ([]model.TodoItem, error)
+	GetItems(
+		ctx context.Context,
+		fitter *model.Fitter,
+		paging *common.Paging,
+		moreKeys ...string,
+	) ([]model.TodoItem, error)
 	CreateNewItem(ctx context.Context, data *model.TodoItemCreation) error
 	UpdateItem(ctx context.Context, id int, itemData *model.TodoItemUpdation) error
 	DeleteItem(ctx context.Context, id int) error
@@ -24,7 +29,12 @@ func NewItemService(useCase ItemUseCase) *ItemService {
 	}
 }
 
-func (s *ItemService) GetItems(ctx context.Context, fitter *model.Fitter, paging *common.Paging, moreKeys ...string) ([]model.TodoItem, error) {
+func (s *ItemService) GetItems(
+	ctx context.Context,
+	fitter *model.Fitter,
+	paging *common.Paging,
+	moreKeys ...string,
+) ([]model.TodoItem, error) {
 	return s.useCase.GetItems(ctx, fitter, paging, moreKeys...)
 }
 
@@ -36,7 +46,11 @@ func (s *ItemService) CreateNewItem(ctx context.Context, data *model.TodoItemCre
 	return s.useCase.CreateNewItem(ctx, data)
 }
 
-func (s *ItemService) UpdateItem(ctx context.Context, id int, itemData *model.TodoItemUpdation) error {
+func (s *ItemService) UpdateItem(
+	ctx context.Context,
+	id int,
+	itemData *model.TodoItemUpdation,
+) error {
 	return s.useCase.UpdateItem(ctx, id, itemData)
 }
 

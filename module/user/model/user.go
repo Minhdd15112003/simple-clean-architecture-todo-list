@@ -72,13 +72,13 @@ func (role *UserRole) MarshalJSON() ([]byte, error) {
 type User struct {
 	//Embedding models
 	common.SQLModel
-	Email     string   `json:"email" gorm:"column:email;"`
-	Password  string   `json:"password" gorm:"column:password;"`
-	Salt      string   `json:"-" gorm:"column:salt;"`
-	LastName  string   `json:"last_name" gorm:"column:last_name;"`
+	Email     string   `json:"email"      gorm:"column:email;"`
+	Password  string   `json:"password"   gorm:"column:password;"`
+	LastName  string   `json:"last_name"  gorm:"column:last_name;"`
 	FirstName string   `json:"first_name" gorm:"column:first_name;"`
-	Phone     string   `json:"phone" gorm:"column:phone;"`
-	Role      UserRole `json:"-" gorm:"column:role;"`
+	Phone     string   `json:"phone"      gorm:"column:phone;"`
+	Role      UserRole `json:"-"          gorm:"column:role;"`
+	Status    int      `"json:"status" "gorm:"column:status;type:int"`
 }
 
 func (User) TableName() string {
@@ -102,12 +102,11 @@ func (u *User) GetRole() string {
 
 type UserCreation struct {
 	common.SQLModel
-	Email     string `json:"email" gorm:"column:email;"`
-	Password  string `json:"password" gorm:"column:password;"`
-	LastName  string `json:"last_name" gorm:"column:last_name;"`
+	Email     string `json:"email"      gorm:"column:email;"`
+	Password  string `json:"password"   gorm:"column:password;"`
+	LastName  string `json:"last_name"  gorm:"column:last_name;"`
 	FirstName string `json:"first_name" gorm:"column:first_name;"`
-	Salt      string `json:"-" gorm:"column:salt;"`
-	Role      string `json:"-" gorm:"column:role;"`
+	Role      string `json:"-"          gorm:"column:role;"`
 }
 
 func (UserCreation) TableName() string {
@@ -115,7 +114,7 @@ func (UserCreation) TableName() string {
 }
 
 type UserLogin struct {
-	Email    string `json:"email" form:"email" gorm:"column:email;"`
+	Email    string `json:"email"    form:"email"    gorm:"column:email;"`
 	Password string `json:"password" form:"password" gorm:"column:password;"`
 }
 
@@ -124,9 +123,9 @@ func (UserLogin) TableName() string {
 }
 
 type UserUpdation struct {
-	Title       *string `json:"title" gorm:"column:title;"`
+	Title       *string `json:"title"       gorm:"column:title;"`
 	Description *string `json:"description" gorm:"column:description;"`
-	Status      string  `json:"status" gorm:"column:status;"`
+	Status      string  `json:"status"      gorm:"column:status;"`
 }
 
 func (UserUpdation) TableName() string {

@@ -64,7 +64,13 @@ func NewCustomError(root error, msg, key string) *AppError {
 }
 
 func ErrDB(err error) *AppError {
-	return NewFullErrorResponse(http.StatusInternalServerError, err, "something went wrong with DB", err.Error(), "DbError")
+	return NewFullErrorResponse(
+		http.StatusInternalServerError,
+		err,
+		"something went wrong with DB",
+		err.Error(),
+		"DbError",
+	)
 }
 
 func ErrInvalidRequest(err error) *AppError {
@@ -72,7 +78,13 @@ func ErrInvalidRequest(err error) *AppError {
 }
 
 func ErrInternal(err error) *AppError {
-	return NewFullErrorResponse(http.StatusInternalServerError, err, "something went wrong in the server", err.Error(), "InternalError")
+	return NewFullErrorResponse(
+		http.StatusInternalServerError,
+		err,
+		"something went wrong in the server",
+		err.Error(),
+		"InternalError",
+	)
 }
 
 func ErrCannotListEntity(entity string, err error) *AppError {

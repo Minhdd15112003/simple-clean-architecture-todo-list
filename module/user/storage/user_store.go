@@ -24,7 +24,11 @@ func (s *sqlStore) CreateUser(ctx context.Context, data *model.UserCreation) err
 
 }
 
-func (s *sqlStore) FindUser(ctx context.Context, conditions map[string]interface{}, moreInfor ...string) (*model.User, error) {
+func (s *sqlStore) FindUser(
+	ctx context.Context,
+	conditions map[string]interface{},
+	moreInfor ...string,
+) (*model.User, error) {
 	db := s.db.Table(model.User{}.TableName())
 
 	for i := range moreInfor {

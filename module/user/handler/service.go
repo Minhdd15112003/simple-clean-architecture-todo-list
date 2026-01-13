@@ -2,11 +2,13 @@ package handler
 
 import (
 	"context"
+	"social-todo-list/components/tokenprovider"
 	"social-todo-list/module/user/model"
 )
 
 type IUserUseCase interface {
 	Register(ctx context.Context, data *model.UserCreation) error
+	Login(ctx context.Context, data *model.UserLogin) (tokenprovider.Token, error)
 }
 
 type IUserService struct {
@@ -21,4 +23,8 @@ func NewUserService(useCase IUserUseCase) *IUserService {
 
 func (s *IUserService) Register(ctx context.Context, data *model.UserCreation) error {
 	return s.useCase.Register(ctx, data)
+}
+
+func (s *IUserService) Login(ctx context.Context, data *model.UserLogin) (tokenprovider.Token, error) {
+	return s.useCase.Login(ctx, data)
 }
