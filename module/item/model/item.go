@@ -22,6 +22,8 @@ type TodoItem struct {
 	Description string        `json:"description" gorm:"column:description;"`
 	Status      string        `json:"status"      gorm:"column:status;"`
 	Image       *common.Image `json:"image"       gorm:"column:image;type:json"`
+	User_id     int           `json:"-" gorm:"column:user_id;type:int"`
+	// User        model.User    `json:"user,omitempty" gorm:"column:user";`
 }
 
 func (TodoItem) TableName() string {
@@ -33,6 +35,7 @@ type TodoItemCreation struct {
 	Title       string        `json:"title"       gorm:"column:title;"`
 	Description string        `json:"description" gorm:"column:description;"`
 	Image       *common.Image `json:"image"       gorm:"column:image;type:json"`
+	User_id     int           `json:"-" gorm:"column:user_id;type:int"`
 }
 
 func (i *TodoItemCreation) Validate() error {

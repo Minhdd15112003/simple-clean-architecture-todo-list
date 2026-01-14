@@ -19,6 +19,11 @@ func (s *sqlStore) GetItems(
 
 	db := s.db.Table(model.TodoItem{}.TableName()).Where("status <> ?", "Deleted")
 
+	requester, err := common.GetRequesterFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	db = db.Where("user_id = ?", requester.GetUserID())
 	if f := fitter; f != nil {
 		if v := f.Status; v != "" {
 			db = db.Where(&model.TodoItem{

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"social-todo-list/common"
 	"social-todo-list/module/item/model"
 )
@@ -62,6 +63,16 @@ func (useCase *itemUseCase) CreateNewItem(ctx context.Context, data *model.TodoI
 	if err := data.Validate(); err != nil {
 		return err
 	}
+
+	// Get requester from context
+	requester, err := common.GetRequesterFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Set user_id from requester
+	data.User_id = requester.GetUserID()
+
 	if err := useCase.store.CreateItem(ctx, data); err != nil {
 		return common.ErrCannotCreateEntity(model.EntityName, err)
 	}
@@ -74,10 +85,22 @@ func (useCase *itemUseCase) UpdateItem(
 	data *model.TodoItemUpdation,
 ) error {
 
+	// Get requester from context
+	requester, err := common.GetRequesterFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
 	itemData, err := useCase.store.GetItem(ctx, map[string]interface{}{"id": id})
 
 	if err != nil {
 		return common.ErrCannotGetEntity(model.EntityName, err)
+	}
+
+	// Check authorization: must be owner or admin
+	isOwner := requester.GetUserID() == itemData.User_id
+	if !isOwner && !common.IsAdmin(requester) {
+		return common.ErrNoPermission(errors.New("no permission"))
 	}
 
 	if itemData.Status == "Deleted" {
@@ -93,10 +116,22 @@ func (useCase *itemUseCase) UpdateItem(
 
 func (useCase *itemUseCase) DeleteItem(ctx context.Context, id int) error {
 
+	// Get requester from context
+	requester, err := common.GetRequesterFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
 	itemData, err := useCase.store.GetItem(ctx, map[string]interface{}{"id": id})
 
 	if err != nil {
 		return common.ErrCannotGetEntity(model.EntityName, err)
+	}
+
+	// Check authorization: must be owner or admin
+	isOwner := requester.GetUserID() == itemData.User_id
+	if !isOwner && !common.IsAdmin(requester) {
+		return common.ErrNoPermission(errors.New("no permission"))
 	}
 
 	if itemData.Status == "Deleted" {

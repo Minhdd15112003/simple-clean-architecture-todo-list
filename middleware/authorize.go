@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"social-todo-list/common"
 	"social-todo-list/components/tokenprovider"
 	"social-todo-list/module/user/model"
@@ -19,8 +18,8 @@ type AuthenStore interface {
 
 func ErrWrongAuthHeader(err error) *common.AppError {
 	return common.NewCustomError(err,
-		fmt.Sprintf("wrong authen header"),
-		fmt.Sprintf("ErrWrongAuthHeader"))
+		"wrong authen header",
+		"ErrWrongAuthHeader")
 }
 
 func extractTokenFromHeaderString(s string) (string, error) {
@@ -35,13 +34,15 @@ func RequiredAuth(authStore AuthenStore, tokenProvider tokenprovider.Provider) f
 	return func(ctx *gin.Context) {
 		token, err := extractTokenFromHeaderString(ctx.GetHeader("Authorization"))
 		if err != nil {
-			ctx.JSON(500, common.ErrInternal(err))
+			appErr := common.ErrInternal(err)
+			ctx.AbortWithStatusJSON(appErr.StatusCode, appErr)
 			return
 		}
 
 		payload, err := tokenProvider.Validate(token)
 		if err != nil {
-			ctx.JSON(500, common.ErrInternal(err))
+			appErr := common.ErrInternal(err)
+			ctx.AbortWithStatusJSON(appErr.StatusCode, appErr)
 			return
 		}
 
@@ -49,16 +50,20 @@ func RequiredAuth(authStore AuthenStore, tokenProvider tokenprovider.Provider) f
 			"id": payload.UserId(),
 		})
 		if err != nil {
-			ctx.JSON(400, common.ErrCannotGetEntity(model.EntityName, err))
+			appErr := common.ErrCannotGetEntity(model.EntityName, err)
+			ctx.AbortWithStatusJSON(appErr.StatusCode, appErr)
 			return
 		}
 		if user.Status == 0 {
-			ctx.JSON(400, common.ErrNoPermission(err))
+			appErr := common.ErrNoPermission(err)
+			ctx.AbortWithStatusJSON(appErr.StatusCode, appErr)
 			return
 		}
 
-		// user.Mask(common.Db)
-		ctx.Set(common.CurrentUser, user)
+		// Store requester in request context (not gin context) for clean architecture
+		ctx.Request = ctx.Request.WithContext(
+			context.WithValue(ctx.Request.Context(), common.CurrentUser, user),
+		)
 		ctx.Next()
 	}
 }

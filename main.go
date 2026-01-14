@@ -23,6 +23,7 @@ import (
 )
 
 func main() {
+	gin.SetMode(gin.DebugMode) // Set mode trước
 	DB_CONN := os.Getenv("DB_CONN")
 	SECRET_KEY := os.Getenv("SECRET_KEY")
 
@@ -36,42 +37,36 @@ func main() {
 
 	router := gin.Default()
 	router.Static("/static", "./static")
+
 	v1 := router.Group("/v1")
+	authStorage := userStorage.NewSqlStore(db)
+	tokenprovider := jwt.NewTokenJWTProvider("jwt", SECRET_KEY)
+	middlewareAuth := middleware.RequiredAuth(authStorage, tokenprovider)
 	{
 		v1.PUT("/upload", upload.Upload(db))
 		users := v1.Group("auth")
 		{
-			storage := userStorage.NewSqlStore(db)
-			tokenprovider := jwt.NewTokenJWTProvider("jwt", SECRET_KEY)
-			useCase := userUseCase.NewAuthUseCase(storage, tokenprovider, 60*60*24*30)
+			useCase := userUseCase.NewAuthUseCase(authStorage, tokenprovider, 60*60*24*30)
 			service := handlerUser.NewUserService(useCase)
 			handler := ginuser.NewGinUserHandler(service)
 			users.POST("/register", handler.Register)
 			users.POST("/login", handler.Login)
-			users.GET("/profile", middleware.RequiredAuth(storage, tokenprovider), handler.Profile)
+			users.GET("/profile", middlewareAuth, handler.Profile)
 		}
 
-		items := v1.Group("items")
+		items := v1.Group("items", middlewareAuth)
 		{
 			// Dependency Injection: Storage -> UseCase -> Service -> Handler
-			storage := storage.NewSqlStore(
-				db,
-			) // layer Data Access/Storage: tương tác với cơ sở dữ liệu
-			useCase := usecase.NewItemUseCase(
-				storage,
-			) // layer Business Logic/UseCase: thực hiện các nghiệp vụ chính của ứng dụng
-			service := handler.NewItemService(
-				useCase,
-			) // layer Interface Adapter/Service: chuyển đổi dữ liệu giữa UseCase và Handler
-			handler := ginitem.NewGinItemHandler(
-				service,
-			) //layer Frameworks/Drivers/Transport: thực hiện giao tiếp với bên ngoài (HTTP, gRPC, ...)
+			storage := storage.NewSqlStore(db)            // layer Data Access/Storage: tương tác với cơ sở dữ liệu
+			useCase := usecase.NewItemUseCase(storage)    // layer Business Logic/UseCase: thực hiện các nghiệp vụ chính của ứng dụng
+			service := handler.NewItemService(useCase)    // layer Interface Adapter/Service: chuyển đổi dữ liệu giữa UseCase và Handler
+			handler := ginitem.NewGinItemHandler(service) //layer Frameworks/Drivers/Transport: thực hiện giao tiếp với bên ngoài (HTTP, gRPC, ...)
 
 			items.GET("", handler.GetItems)
-			items.GET(":id", handler.GetItem)
+			items.GET("/:id", handler.GetItem)
 			items.POST("", handler.CreateItem)
-			items.PATCH(":id", handler.UpdateItem)
-			items.DELETE(":id", handler.DeleteItem)
+			items.PATCH("/:id", handler.UpdateItem)
+			items.DELETE("/:id", handler.DeleteItem)
 		}
 	}
 	router.GET("/ping", func(c *gin.Context) {
@@ -79,7 +74,6 @@ func main() {
 			"message": "pong",
 		})
 	})
-	gin.SetMode(gin.DebugMode)
 	if err := router.Run(":8000"); err != nil {
 		log.Fatalln(err.Error())
 	} // listens on 0.0.0.0:8080 by default

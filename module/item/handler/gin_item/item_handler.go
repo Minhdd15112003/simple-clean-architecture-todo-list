@@ -108,7 +108,6 @@ func (h *GinItemHandler) DeleteItem(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, err)
 		return
 	}
-
 	if err := h.service.DeleteItem(ctx.Request.Context(), id); err != nil {
 		ctx.JSON(http.StatusBadRequest, err)
 		return
