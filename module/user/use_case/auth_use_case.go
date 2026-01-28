@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"errors"
+	"log"
 	"social-todo-list/common"
 	"social-todo-list/components/tokenprovider"
 	"social-todo-list/module/user/model"
@@ -73,4 +75,13 @@ func (usecase *authUseCase) Login(ctx context.Context, data *model.UserLogin) (t
 
 	return accessToken, nil
 
+}
+
+func (*authUseCase) Profile(ctx context.Context) (*model.User, error) {
+	user, ok := ctx.Value(common.CurrentUser).(*model.User)
+	log.Println(ctx.Value(common.CurrentUser))
+	if !ok {
+		return nil, common.ErrNoPermission(errors.New("unauthorized - no valid requester in context"))
+	}
+	return user, nil
 }

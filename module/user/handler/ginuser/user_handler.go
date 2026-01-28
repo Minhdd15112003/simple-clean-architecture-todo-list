@@ -50,6 +50,11 @@ func (h GinUserHandler) Login(ctx *gin.Context) {
 }
 
 func (h GinUserHandler) Profile(ctx *gin.Context) {
-	user := ctx.MustGet(common.CurrentUser)
+	// user := ctx.Value(common.CurrentUser)
+	user, err := h.service.Profile(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
 	ctx.JSON(http.StatusOK, common.SimpleSuccessResponse(user))
 }

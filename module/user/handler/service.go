@@ -9,6 +9,7 @@ import (
 type IUserUseCase interface {
 	Register(ctx context.Context, data *model.UserCreation) error
 	Login(ctx context.Context, data *model.UserLogin) (tokenprovider.Token, error)
+	Profile(ctx context.Context) (*model.User, error)
 }
 
 type IUserService struct {
@@ -27,4 +28,8 @@ func (s *IUserService) Register(ctx context.Context, data *model.UserCreation) e
 
 func (s *IUserService) Login(ctx context.Context, data *model.UserLogin) (tokenprovider.Token, error) {
 	return s.useCase.Login(ctx, data)
+}
+
+func (s *IUserService) Profile(ctx context.Context) (*model.User, error) {
+	return s.useCase.Profile(ctx)
 }
