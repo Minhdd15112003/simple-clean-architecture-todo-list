@@ -35,6 +35,9 @@ func (s *sqlStore) GetItems(
 	if err := db.Table(model.TodoItem{}.TableName()).Select("id").Count(&paging.Total).Error; err != nil {
 		return nil, err
 	}
+	for i := range moreKeys {
+		db = db.Preload(moreKeys[i])
+	}
 
 	if err := db.
 		Select("*").

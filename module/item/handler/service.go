@@ -12,7 +12,6 @@ type ItemUseCase interface {
 		ctx context.Context,
 		fitter *model.Fitter,
 		paging *common.Paging,
-		moreKeys ...string,
 	) ([]model.TodoItem, error)
 	CreateNewItem(ctx context.Context, data *model.TodoItemCreation) error
 	UpdateItem(ctx context.Context, id int, itemData *model.TodoItemUpdation) error
@@ -33,9 +32,8 @@ func (s *ItemService) GetItems(
 	ctx context.Context,
 	fitter *model.Fitter,
 	paging *common.Paging,
-	moreKeys ...string,
 ) ([]model.TodoItem, error) {
-	return s.useCase.GetItems(ctx, fitter, paging, moreKeys...)
+	return s.useCase.GetItems(ctx, fitter, paging)
 }
 
 func (s *ItemService) GetItemByID(ctx context.Context, id int) (*model.TodoItem, error) {

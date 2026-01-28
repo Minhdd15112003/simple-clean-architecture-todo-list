@@ -40,6 +40,11 @@ func (h *GinItemHandler) GetItems(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, err)
 	}
+
+	for i := range itemData {
+		itemData[i].Mask()
+
+	}
 	ctx.JSON(
 		http.StatusOK,
 		common.NewSuccessResponse(itemData, queryString.Fitter, queryString.Paging),

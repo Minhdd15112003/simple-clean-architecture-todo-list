@@ -7,6 +7,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type DbType int
+
+const (
+	DbTypeItem DbType = 1
+	DbTypeUser DbType = 2
+)
+
 type TokenPayload struct {
 	UId   int    `json:"user_id"`
 	URole string `json:"role"`

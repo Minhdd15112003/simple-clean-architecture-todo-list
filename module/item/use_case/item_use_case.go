@@ -41,9 +41,8 @@ func (useCase *itemUseCase) GetItems(
 	ctx context.Context,
 	fitter *model.Fitter,
 	paging *common.Paging,
-	moreKeys ...string,
 ) ([]model.TodoItem, error) {
-	itemData, err := useCase.store.GetItems(ctx, fitter, paging)
+	itemData, err := useCase.store.GetItems(ctx, fitter, paging, "User")
 	if err != nil {
 		return nil, common.ErrCannotListEntity(model.EntityName, err)
 	}
@@ -98,7 +97,7 @@ func (useCase *itemUseCase) UpdateItem(
 	}
 
 	// Check authorization: must be owner or admin
-	isOwner := requester.GetUserID() == itemData.User_id
+	isOwner := requester.GetUserID() == itemData.UserID
 	if !isOwner && !common.IsAdmin(requester) {
 		return common.ErrNoPermission(errors.New("no permission"))
 	}
@@ -129,7 +128,7 @@ func (useCase *itemUseCase) DeleteItem(ctx context.Context, id int) error {
 	}
 
 	// Check authorization: must be owner or admin
-	isOwner := requester.GetUserID() == itemData.User_id
+	isOwner := requester.GetUserID() == itemData.UserID
 	if !isOwner && !common.IsAdmin(requester) {
 		return common.ErrNoPermission(errors.New("no permission"))
 	}
