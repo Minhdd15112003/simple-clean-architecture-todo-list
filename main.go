@@ -15,6 +15,10 @@ import (
 	"social-todo-list/module/user/handler/ginuser"
 	userStorage "social-todo-list/module/user/storage"
 	userUseCase "social-todo-list/module/user/use_case"
+	likeItemHandler "social-todo-list/module/userlikeitem/handler"
+	likeItemGin "social-todo-list/module/userlikeitem/handler/gin_item"
+	likeItemRepo "social-todo-list/module/userlikeitem/storage"
+	likeItemUsecase "social-todo-list/module/userlikeitem/use_case"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -67,6 +71,17 @@ func main() {
 			items.POST("", handler.CreateItem)
 			items.PATCH("/:id", handler.UpdateItem)
 			items.DELETE("/:id", handler.DeleteItem)
+
+			{
+				storage := likeItemRepo.NewSqlStore(db)
+				useCase := likeItemUsecase.NewUserLikeItemUseCase(storage)
+				service := likeItemHandler.NewLikeService(useCase)
+				handler := likeItemGin.NewGinLikeHandler(service)
+
+				items.GET("/:id/list-user", handler.ListUserLikeItem)
+				items.POST("/:id/like", handler.LikeItem)
+				items.DELETE("/:id/unlike", handler.UnLikeItem)
+			}
 		}
 	}
 	router.GET("/ping", func(c *gin.Context) {

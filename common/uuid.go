@@ -24,7 +24,7 @@ func NewUID(localID uint32, objectType int, shardID uint32) UID {
 
 func (uid UID) String() string {
 	val := uint64(uid.localID)<<28 | uint64(uid.objectType)<<18 | uint64(uid.shardID)<<0
-	return base58.Encode([]byte(fmt.Sprintf("&v", val))) // ❌ "&v" sai
+	return base58.Encode([]byte(fmt.Sprintf("%d", val))) // ✅ Sửa "&v" → "%d"
 }
 
 func (uid UID) GetLocalID() uint32 {
@@ -40,16 +40,24 @@ func (uid UID) GetObjectType() int {
 }
 
 func DecomposeUID(s string) (UID, error) {
-	uid, err := strconv.ParseUint(s, 10, 64)
+	// Decode base58 string về bytes
+	decoded := base58.Decode(s)
+	if len(decoded) == 0 {
+		return UID{}, errors.New("invalid base58 string")
+	}
+
+	// Parse bytes thành uint64
+	uid, err := strconv.ParseUint(string(decoded), 10, 64)
 	if err != nil {
 		return UID{}, err
 	}
+
 	if (1 << 18) > uid {
 		return UID{}, errors.New("wrong uid")
 	}
 
 	u := UID{
-		localID:    uint32(uid >> 38),
+		localID:    uint32(uid >> 28), // ✅ Sửa 38 → 28 (phù hợp với String())
 		objectType: int(uid >> 18 & 0x3FF),
 		shardID:    uint32(uid >> 0 & 0x3FFFF),
 	}
@@ -71,4 +79,13 @@ func (uid *UID) UnmarshalJSON(data []byte) error {
 
 	*uid = u
 	return nil
+}
+
+// FromBase58 decodes a base58 encoded UID string to real local ID
+func FromBase58(s string) (uint32, error) {
+	uid, err := DecomposeUID(s)
+	if err != nil {
+		return 0, err
+	}
+	return uid.GetLocalID(), nil
 }
