@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"social-todo-list/common"
+	"social-todo-list/common/asyncjob"
 	"social-todo-list/pubsub"
 )
 
@@ -87,37 +88,26 @@ func (ce *consumerEngine) startSubTopic(
 			msg := <-c
 			log.Println("Received message from topic:", msg.Channel())
 
-			// Xử lý message với TẤT CẢ các jobs đã đăng ký
-			for i := range consumerJobs {
-				job := consumerJobs[i]
+			// BƯỚC 4: Tạo asyncjobs từ consumer jobs
+			// Mỗi consumer job sẽ được wrap trong asyncjob để có retry mechanism
+			jobs := make([]asyncjob.Job, len(consumerJobs))
+			for i, consumerJob := range consumerJobs {
+				// Capture biến trong closure
+				job := consumerJob
+				message := msg
 
-				if isConcurrent {
-					// Topic "UserLikeItem"
-					// └─ 1 Goroutine chính (dòng 72) - lắng nghe message
-					//    │
-					//    Nhận Message 1:
-					//    ├─ Goroutine con 1: Job A (chạy riêng)
-					//    └─ Goroutine con 2: Job B (chạy riêng)
+				// Tạo asyncjob với handler là consumer job handler
+				// asyncjob sẽ tự động retry nếu có lỗi
+				jobs[i] = asyncjob.NewJob(func(ctx context.Context) error {
+					return job.Handler(ctx, message)
+				}, asyncjob.WithName(job.Title))
+			}
 
-					//    Nhận Message 2:
-					//    ├─ Goroutine con 3: Job A (chạy riêng)
-					//    └─ Goroutine con 4: Job B (chạy riêng)
-					go func(j consumerJob) {
-						if err := j.Handler(context.Background(), msg); err != nil {
-							log.Println("Error when running consumer job:", err)
-						}
-					}(job)
-				} else {
-					// Topic "UserLikeItem"
-					// └─ 1 Goroutine chính (dòng 72)
-					//    └─ Tất cả jobs chạy tuần tự TRONG goroutine này
-					//       ├─ Message 1 → Job A xong → Job B xong
-					//       ├─ Message 2 → Job A xong → Job B xong
-					//       └─ Message 3 → ...
-					if err := job.Handler(context.Background(), msg); err != nil {
-						log.Println("Error when running consumer job:", err)
-					}
-				}
+			// BƯỚC 5: Chạy jobs trong job group
+			// - isConcurrent = true: jobs chạy song song
+			// - isConcurrent = false: jobs chạy tuần tự
+			if err := asyncjob.NewGroup(isConcurrent, jobs...).Run(context.Background()); err != nil {
+				log.Println("Error when running consumer jobs:", err)
 			}
 		}
 	}()
