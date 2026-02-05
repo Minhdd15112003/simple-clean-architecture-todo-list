@@ -41,6 +41,7 @@ func main() {
 
 	router := gin.Default()
 	router.Static("/static", "./static")
+	router.Use(middleware.Recover())
 
 	v1 := router.Group("/v1")
 	authStorage := userStorage.NewSqlStore(db)
@@ -60,28 +61,33 @@ func main() {
 
 		items := v1.Group("items", middlewareAuth)
 		{
-			// Dependency Injection: Storage -> UseCase -> Service -> Handler
-			storage := storage.NewSqlStore(db)            // layer Data Access/Storage: tương tác với cơ sở dữ liệu
-			useCase := usecase.NewItemUseCase(storage)    // layer Business Logic/UseCase: thực hiện các nghiệp vụ chính của ứng dụng
-			service := handler.NewItemService(useCase)    // layer Interface Adapter/Service: chuyển đổi dữ liệu giữa UseCase và Handler
-			handler := ginitem.NewGinItemHandler(service) //layer Frameworks/Drivers/Transport: thực hiện giao tiếp với bên ngoài (HTTP, gRPC, ...)
+			// Layer 1: Storage (Data Access)
+			itemStore := storage.NewSqlStore(db)
+			likeStore := likeItemRepo.NewSqlStore(db)
 
-			items.GET("", handler.GetItems)
-			items.GET("/:id", handler.GetItem)
-			items.POST("", handler.CreateItem)
-			items.PATCH("/:id", handler.UpdateItem)
-			items.DELETE("/:id", handler.DeleteItem)
+			// Layer 2: Use Cases (Business Logic)
+			itemUseCase := usecase.NewItemUseCase(itemStore, likeStore)
+			likeUseCase := likeItemUsecase.NewUserLikeItemUseCase(likeStore, itemStore)
 
-			{
-				storage := likeItemRepo.NewSqlStore(db)
-				useCase := likeItemUsecase.NewUserLikeItemUseCase(storage)
-				service := likeItemHandler.NewLikeService(useCase)
-				handler := likeItemGin.NewGinLikeHandler(service)
+			// Layer 3: Services (Application Logic)
+			itemService := handler.NewItemService(itemUseCase)
+			likeService := likeItemHandler.NewLikeService(likeUseCase)
 
-				items.GET("/:id/list-user", handler.ListUserLikeItem)
-				items.POST("/:id/like", handler.LikeItem)
-				items.DELETE("/:id/unlike", handler.UnLikeItem)
-			}
+			// Layer 4: Handlers (HTTP Transport)
+			itemHandler := ginitem.NewGinItemHandler(itemService)
+			likeHandler := likeItemGin.NewGinLikeHandler(likeService)
+
+			// Item routes
+			items.GET("", itemHandler.GetItems)
+			items.GET("/:id", itemHandler.GetItem)
+			items.POST("", itemHandler.CreateItem)
+			items.PATCH("/:id", itemHandler.UpdateItem)
+			items.DELETE("/:id", itemHandler.DeleteItem)
+
+			// Like routes
+			items.GET("/:id/list-user", likeHandler.ListUserLikeItem)
+			items.POST("/:id/like", likeHandler.LikeItem)
+			items.DELETE("/:id/unlike", likeHandler.UnLikeItem)
 		}
 	}
 	router.GET("/ping", func(c *gin.Context) {

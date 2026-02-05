@@ -2,7 +2,9 @@ package usecase
 
 import (
 	"context"
+	"log"
 	"social-todo-list/common"
+	"social-todo-list/middleware"
 	"social-todo-list/module/userlikeitem/model"
 )
 
@@ -15,15 +17,23 @@ type UserLikeItemStore interface {
 	Find(ctx context.Context, userID, itemID int) (*model.Like, error)
 	Create(ctx context.Context, data *model.Like) error
 	Delete(ctx context.Context, userID, itemID int) error
+	GetLikeItem(ctx context.Context, ids []int) (map[int]int, error)
+}
+
+type InDeCreaseItemStore interface {
+	IncreaseLikeCount(ctx context.Context, id int) error
+	DecreaseLikeCount(ctx context.Context, id int) error
 }
 
 type userLikeItemUseCase struct {
-	store UserLikeItemStore
+	store     UserLikeItemStore
+	itemStore InDeCreaseItemStore
 }
 
-func NewUserLikeItemUseCase(store UserLikeItemStore) *userLikeItemUseCase {
+func NewUserLikeItemUseCase(store UserLikeItemStore, itemStore InDeCreaseItemStore) *userLikeItemUseCase {
 	return &userLikeItemUseCase{
-		store: store,
+		store:     store,
+		itemStore: itemStore,
 	}
 }
 
@@ -31,6 +41,13 @@ func (usecase *userLikeItemUseCase) LikeItem(ctx context.Context, data *model.Li
 	if err := usecase.store.Create(ctx, data); err != nil {
 		return model.ErrCannotLikeItem(err)
 	}
+
+	go func() {
+		defer middleware.RecoverGoroutine()
+		if err := usecase.itemStore.IncreaseLikeCount(ctx, data.ItemID); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	return nil
 
@@ -49,6 +66,13 @@ func (usecase *userLikeItemUseCase) UnLikeItem(ctx context.Context, userID, item
 	if err := usecase.store.Delete(ctx, userID, itemID); err != nil {
 		return model.ErrCannotUnLikeItem(err)
 	}
+
+	go func() {
+		defer middleware.RecoverGoroutine()
+		if err := usecase.itemStore.DecreaseLikeCount(ctx, itemID); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	return nil
 

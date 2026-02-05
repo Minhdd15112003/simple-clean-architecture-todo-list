@@ -39,13 +39,27 @@ func (s *sqlStore) GetItems(
 		db = db.Preload(moreKeys[i])
 	}
 
+	if v := paging.FakeCursor; v != "" {
+		uid, err := common.FromBase58(v)
+		if err != nil {
+			return nil, common.ErrDB(err)
+		}
+
+		db = db.Where("id < ?", uid)
+	} else {
+		db = db.Offset((paging.Page - 1) * paging.Limit)
+	}
+
 	if err := db.
 		Select("*").
-		Offset((paging.Page - 1) * paging.Limit).
 		Limit(paging.Limit).
 		Order("id DESC").
 		Find(&itemData).Error; err != nil {
 		return nil, common.ErrDB(err)
+	}
+	if len(itemData) > 0 {
+		itemData[len(itemData)-1].Mask()
+		paging.NextCursor = itemData[len(itemData)-1].FakeID.String()
 	}
 
 	return itemData, nil
@@ -92,6 +106,24 @@ func (s *sqlStore) DeleteItem(ctx context.Context, cond map[string]interface{}) 
 	if err := s.db.Table(model.TodoItem{}.TableName()).Where(cond).Updates(map[string]interface{}{
 		"status": Deleted,
 	}).Error; err != nil {
+		return common.ErrDB(err)
+	}
+	return nil
+}
+
+func (s *sqlStore) IncreaseLikeCount(ctx context.Context, id int) error {
+	db := s.db
+	if err := db.Table(model.TodoItem{}.TableName()).Where("id = ?", id).
+		Update("liked_count", gorm.Expr("liked_count + ?", 1)).Error; err != nil {
+		return common.ErrDB(err)
+	}
+	return nil
+}
+
+func (s *sqlStore) DecreaseLikeCount(ctx context.Context, id int) error {
+	db := s.db
+	if err := db.Table(model.TodoItem{}.TableName()).Where("id = ?", id).
+		Update("liked_count", gorm.Expr("liked_count - ?", 1)).Error; err != nil {
 		return common.ErrDB(err)
 	}
 	return nil

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"social-todo-list/common"
 	"social-todo-list/module/item/model"
+	likeStore "social-todo-list/module/userlikeitem/use_case"
 )
 
 // handler => use case -> repo > storage
@@ -27,13 +28,15 @@ type ItemStorage interface {
 }
 
 type itemUseCase struct {
-	store ItemStorage
+	store     ItemStorage
+	likeStore likeStore.UserLikeItemStore
 }
 
 // constructor
-func NewItemUseCase(store ItemStorage) *itemUseCase {
+func NewItemUseCase(store ItemStorage, likeStore likeStore.UserLikeItemStore) *itemUseCase {
 	return &itemUseCase{
-		store: store, // Context giữa UseCase và Storage
+		store:     store, // Context giữa UseCase và Storage
+		likeStore: likeStore,
 	}
 }
 
@@ -45,6 +48,23 @@ func (useCase *itemUseCase) GetItems(
 	itemData, err := useCase.store.GetItems(ctx, fitter, paging, "User")
 	if err != nil {
 		return nil, common.ErrCannotListEntity(model.EntityName, err)
+	}
+	if len(itemData) == 0 {
+		return itemData, nil
+	}
+	ids := make([]int, len(itemData))
+
+	for i := range ids {
+		ids[i] = itemData[i].Id
+
+	}
+	likeUserMap, err := useCase.likeStore.GetLikeItem(ctx, ids)
+	for i := range itemData {
+		itemData[i].LikedCount = likeUserMap[itemData[i].Id]
+	}
+
+	if err != nil {
+		return itemData, nil
 	}
 	return itemData, nil
 }

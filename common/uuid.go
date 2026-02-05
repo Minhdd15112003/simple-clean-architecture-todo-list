@@ -24,7 +24,7 @@ func NewUID(localID uint32, objectType int, shardID uint32) UID {
 
 func (uid UID) String() string {
 	val := uint64(uid.localID)<<28 | uint64(uid.objectType)<<18 | uint64(uid.shardID)<<0
-	return base58.Encode([]byte(fmt.Sprintf("%d", val))) // ✅ Sửa "&v" → "%d"
+	return base58.Encode([]byte(fmt.Sprintf("%d", val)))
 }
 
 func (uid UID) GetLocalID() uint32 {
@@ -57,7 +57,7 @@ func DecomposeUID(s string) (UID, error) {
 	}
 
 	u := UID{
-		localID:    uint32(uid >> 28), // ✅ Sửa 38 → 28 (phù hợp với String())
+		localID:    uint32(uid >> 28),
 		objectType: int(uid >> 18 & 0x3FF),
 		shardID:    uint32(uid >> 0 & 0x3FFFF),
 	}
