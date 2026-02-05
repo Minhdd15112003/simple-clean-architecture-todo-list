@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 	"social-todo-list/common"
-	"social-todo-list/middleware"
 	"social-todo-list/module/userlikeitem/model"
+	"social-todo-list/pubsub"
 )
 
 type UserLikeItemStore interface {
@@ -26,14 +26,16 @@ type InDeCreaseItemStore interface {
 }
 
 type userLikeItemUseCase struct {
-	store     UserLikeItemStore
-	itemStore InDeCreaseItemStore
+	store UserLikeItemStore
+	// itemStore InDeCreaseItemStore
+	ps pubsub.PubSup
 }
 
-func NewUserLikeItemUseCase(store UserLikeItemStore, itemStore InDeCreaseItemStore) *userLikeItemUseCase {
+func NewUserLikeItemUseCase(store UserLikeItemStore, ps pubsub.PubSup) *userLikeItemUseCase {
 	return &userLikeItemUseCase{
-		store:     store,
-		itemStore: itemStore,
+		store: store,
+		// itemStore: itemStore,
+		ps: ps,
 	}
 }
 
@@ -42,12 +44,18 @@ func (usecase *userLikeItemUseCase) LikeItem(ctx context.Context, data *model.Li
 		return model.ErrCannotLikeItem(err)
 	}
 
-	go func() {
-		defer middleware.RecoverGoroutine()
-		if err := usecase.itemStore.IncreaseLikeCount(ctx, data.ItemID); err != nil {
-			log.Println(err)
-		}
-	}()
+	if err := usecase.ps.Publish(ctx, common.TopicUserLikeItem, pubsub.NewMessage(data)); err != nil {
+		log.Println(err)
+	}
+	// job := asyncjob.NewJob(func(ctx context.Context) error {
+	// 	if err := usecase.itemStore.IncreaseLikeCount(ctx, data.ItemID); err != nil {
+	// 		return err
+	// 	}
+	// 	return nil
+	// })
+	// if err := asyncjob.NewGroup(true, job).Run(ctx); err != nil {
+	// 	log.Println(err)
+	// }
 
 	return nil
 
@@ -67,15 +75,26 @@ func (usecase *userLikeItemUseCase) UnLikeItem(ctx context.Context, userID, item
 		return model.ErrCannotUnLikeItem(err)
 	}
 
-	go func() {
-		defer middleware.RecoverGoroutine()
-		if err := usecase.itemStore.DecreaseLikeCount(ctx, itemID); err != nil {
-			log.Println(err)
-		}
-	}()
+	data := &model.Like{
+		UserID: userID,
+		ItemID: itemID,
+	}
+
+	if err := usecase.ps.Publish(ctx, common.TopicUserDislikeItem, pubsub.NewMessage(data)); err != nil {
+		log.Println(err)
+	}
+
+	// job := asyncjob.NewJob(func(ctx context.Context) error {
+	// 	if err := usecase.itemStore.DecreaseLikeCount(ctx, itemID); err != nil {
+	// 		return err
+	// 	}
+	// 	return nil
+	// })
+	// if err := asyncjob.NewGroup(true, job).Run(ctx); err != nil {
+	// 	log.Println(err)
+	// }
 
 	return nil
-
 }
 func (usecase *userLikeItemUseCase) ListUsers(
 	ctx context.Context,

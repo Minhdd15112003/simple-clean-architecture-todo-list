@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"social-todo-list/common"
 	"social-todo-list/components/tokenprovider/jwt"
 	"social-todo-list/middleware"
 	"social-todo-list/module/item/handler"
@@ -19,6 +20,8 @@ import (
 	likeItemGin "social-todo-list/module/userlikeitem/handler/gin_item"
 	likeItemRepo "social-todo-list/module/userlikeitem/storage"
 	likeItemUsecase "social-todo-list/module/userlikeitem/use_case"
+	"social-todo-list/pubsub"
+	"social-todo-list/subscriber"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -45,8 +48,10 @@ func main() {
 
 	v1 := router.Group("/v1")
 	authStorage := userStorage.NewSqlStore(db)
-	tokenprovider := jwt.NewTokenJWTProvider("jwt", SECRET_KEY)
+	tokenprovider := jwt.NewTokenJWTProvider(common.PluginJWT, SECRET_KEY)
 	middlewareAuth := middleware.RequiredAuth(authStorage, tokenprovider)
+	ps := pubsub.NewPubSub()
+
 	{
 		v1.PUT("/upload", upload.Upload(db))
 		users := v1.Group("auth")
@@ -65,9 +70,13 @@ func main() {
 			itemStore := storage.NewSqlStore(db)
 			likeStore := likeItemRepo.NewSqlStore(db)
 
+			// Setup PubSub Subscribers
+			subEngine := subscriber.NewEngine(ps)
+			subEngine.Start(itemStore)
+
 			// Layer 2: Use Cases (Business Logic)
 			itemUseCase := usecase.NewItemUseCase(itemStore, likeStore)
-			likeUseCase := likeItemUsecase.NewUserLikeItemUseCase(likeStore, itemStore)
+			likeUseCase := likeItemUsecase.NewUserLikeItemUseCase(likeStore, ps)
 
 			// Layer 3: Services (Application Logic)
 			itemService := handler.NewItemService(itemUseCase)

@@ -14,6 +14,13 @@ const (
 	DbTypeUser DbType = 2
 )
 
+const (
+	PluginJWT            = "jwt"
+	PluginPubSub         = "pubsub"
+	TopicUserLikeItem    = "TopicUserLikeItem"
+	TopicUserDislikeItem = "TopicUserDislikeItem"
+)
+
 type TokenPayload struct {
 	UId   int    `json:"user_id"`
 	URole string `json:"role"`
