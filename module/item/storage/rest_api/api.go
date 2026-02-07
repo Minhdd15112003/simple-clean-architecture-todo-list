@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -31,14 +32,14 @@ func (s *itemService) GetLikeItem(ctx context.Context, ids []int) (map[int]int, 
 	res, err := s.client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(requestBody{Ids: ids}).
-		SetResult(response).
-		Post(fmt.Sprintf("%s/%s", s.serviceURL, "/v1/rpc/item-like"))
+		SetResult(&response).
+		Post(fmt.Sprintf("%s/%s", s.serviceURL, "v1/rpc/item-like"))
 
 	if err != nil {
 		return nil, err
 	}
 	if !res.IsSuccess() {
-		// log.Println(res.RawResponse)
+		log.Println(res.RawResponse)
 		return nil, errors.New("cannot call api get item likes")
 	}
 	return response.Data, nil

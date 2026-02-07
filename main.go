@@ -33,6 +33,10 @@ func main() {
 	gin.SetMode(gin.DebugMode) // Set mode trước
 	DB_CONN := os.Getenv("DB_CONN")
 	SECRET_KEY := os.Getenv("SECRET_KEY")
+	ITEM_LIKE_SERVICE_URL := os.Getenv("ITEM_LIKE_SERVICE_URL")
+	if ITEM_LIKE_SERVICE_URL == "" {
+		ITEM_LIKE_SERVICE_URL = "http://localhost:8001" // default for local development
+	}
 
 	db, err := gorm.Open(mysql.Open(DB_CONN), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
@@ -63,7 +67,7 @@ func main() {
 	subEngine.Start(itemStore)
 
 	// Layer 2: Use Cases (Business Logic)
-	itemUseCase := usecase.NewItemUseCase(itemStore, likeStore)
+	itemUseCase := usecase.NewItemUseCase(itemStore, likeStore, ITEM_LIKE_SERVICE_URL)
 	likeUseCase := likeItemUsecase.NewUserLikeItemUseCase(likeStore, ps)
 
 	// Layer 3: Services (Application Logic)
@@ -111,7 +115,7 @@ func main() {
 			"message": "pong",
 		})
 	})
-	if err := router.Run(":8000"); err != nil {
+	if err := router.Run(":8001"); err != nil {
 		log.Fatalln(err.Error())
 	} // listens on 0.0.0.0:8080 by default
 }

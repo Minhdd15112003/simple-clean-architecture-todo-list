@@ -39,6 +39,7 @@ func (h *GinItemHandler) GetItems(ctx *gin.Context) {
 	)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, err)
+		return
 	}
 
 	for i := range itemData {

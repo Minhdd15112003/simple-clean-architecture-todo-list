@@ -29,15 +29,17 @@ type ItemStorage interface {
 }
 
 type itemUseCase struct {
-	store     ItemStorage
-	likeStore likeStore.UserLikeItemStore
+	store          ItemStorage
+	likeStore      likeStore.UserLikeItemStore
+	likeServiceURL string
 }
 
 // constructor
-func NewItemUseCase(store ItemStorage, likeStore likeStore.UserLikeItemStore) *itemUseCase {
+func NewItemUseCase(store ItemStorage, likeStore likeStore.UserLikeItemStore, likeServiceURL string) *itemUseCase {
 	return &itemUseCase{
-		store:     store, // Context giữa UseCase và Storage
-		likeStore: likeStore,
+		store:          store, // Context giữa UseCase và Storage
+		likeStore:      likeStore,
+		likeServiceURL: likeServiceURL,
 	}
 }
 
@@ -60,18 +62,16 @@ func (useCase *itemUseCase) GetItems(
 
 	}
 	// likeUserMap, err := useCase.likeStore.GetLikeItem(ctx, ids)
-	service := restapi.New("http://localhost:8000")
+	service := restapi.New(useCase.likeServiceURL)
 	likeUserMap, err := service.GetLikeItem(ctx, ids)
 	if err != nil {
-		return itemData, nil
+		return nil, common.ErrCannotListEntity(model.EntityName, err)
 	}
+
 	for i := range itemData {
 		itemData[i].LikedCount = likeUserMap[itemData[i].Id]
 	}
 
-	if err != nil {
-		return itemData, nil
-	}
 	return itemData, nil
 }
 
