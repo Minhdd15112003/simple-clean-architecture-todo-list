@@ -5,6 +5,7 @@ import (
 	"errors"
 	"social-todo-list/common"
 	"social-todo-list/module/item/model"
+	restapi "social-todo-list/module/item/storage/rest_api"
 	likeStore "social-todo-list/module/userlikeitem/use_case"
 )
 
@@ -58,7 +59,12 @@ func (useCase *itemUseCase) GetItems(
 		ids[i] = itemData[i].Id
 
 	}
-	likeUserMap, err := useCase.likeStore.GetLikeItem(ctx, ids)
+	// likeUserMap, err := useCase.likeStore.GetLikeItem(ctx, ids)
+	service := restapi.New("http://localhost:8000")
+	likeUserMap, err := service.GetLikeItem(ctx, ids)
+	if err != nil {
+		return itemData, nil
+	}
 	for i := range itemData {
 		itemData[i].LikedCount = likeUserMap[itemData[i].Id]
 	}

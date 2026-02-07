@@ -29,7 +29,6 @@ func Recover() gin.HandlerFunc {
 	}
 }
 
-// RecoverGoroutine for background goroutines (non-HTTP context)
 func RecoverGoroutine() {
 	if err := recover(); err != nil {
 		log.Printf("[PANIC RECOVERED] %v", err)
@@ -39,7 +38,6 @@ func RecoverGoroutine() {
 			return
 		}
 
-		// Log stack trace for debugging
 		log.Printf("[INTERNAL ERROR] %v", err)
 	}
 }

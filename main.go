@@ -47,11 +47,33 @@ func main() {
 	router.Use(middleware.Recover())
 
 	v1 := router.Group("/v1")
+
+	//Setup AUTH
 	authStorage := userStorage.NewSqlStore(db)
 	tokenprovider := jwt.NewTokenJWTProvider(common.PluginJWT, SECRET_KEY)
 	middlewareAuth := middleware.RequiredAuth(authStorage, tokenprovider)
-	ps := pubsub.NewPubSub()
 
+	// Layer 1: Storage (Data Access)
+	itemStore := storage.NewSqlStore(db)
+	likeStore := likeItemRepo.NewSqlStore(db)
+
+	// Setup PubSub Subscribers
+	ps := pubsub.NewPubSub()
+	subEngine := subscriber.NewEngine(ps)
+	subEngine.Start(itemStore)
+
+	// Layer 2: Use Cases (Business Logic)
+	itemUseCase := usecase.NewItemUseCase(itemStore, likeStore)
+	likeUseCase := likeItemUsecase.NewUserLikeItemUseCase(likeStore, ps)
+
+	// Layer 3: Services (Application Logic)
+	itemService := handler.NewItemService(itemUseCase)
+	likeService := likeItemHandler.NewLikeService(likeUseCase)
+
+	// Layer 4: Handlers (HTTP Transport)
+	itemHandler := ginitem.NewGinItemHandler(itemService)
+	likeHandler := likeItemGin.NewGinLikeHandler(likeService)
+	likeRpc := likeItemGin.NewLikeRPC(likeStore)
 	{
 		v1.PUT("/upload", upload.Upload(db))
 		users := v1.Group("auth")
@@ -66,26 +88,6 @@ func main() {
 
 		items := v1.Group("items", middlewareAuth)
 		{
-			// Layer 1: Storage (Data Access)
-			itemStore := storage.NewSqlStore(db)
-			likeStore := likeItemRepo.NewSqlStore(db)
-
-			// Setup PubSub Subscribers
-			subEngine := subscriber.NewEngine(ps)
-			subEngine.Start(itemStore)
-
-			// Layer 2: Use Cases (Business Logic)
-			itemUseCase := usecase.NewItemUseCase(itemStore, likeStore)
-			likeUseCase := likeItemUsecase.NewUserLikeItemUseCase(likeStore, ps)
-
-			// Layer 3: Services (Application Logic)
-			itemService := handler.NewItemService(itemUseCase)
-			likeService := likeItemHandler.NewLikeService(likeUseCase)
-
-			// Layer 4: Handlers (HTTP Transport)
-			itemHandler := ginitem.NewGinItemHandler(itemService)
-			likeHandler := likeItemGin.NewGinLikeHandler(likeService)
-
 			// Item routes
 			items.GET("", itemHandler.GetItems)
 			items.GET("/:id", itemHandler.GetItem)
@@ -98,6 +100,11 @@ func main() {
 			items.POST("/:id/like", likeHandler.LikeItem)
 			items.DELETE("/:id/unlike", likeHandler.UnLikeItem)
 		}
+		rpc := v1.Group("rpc")
+		{
+			rpc.POST("/item-like", likeRpc.GetLikeItem)
+		}
+
 	}
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
