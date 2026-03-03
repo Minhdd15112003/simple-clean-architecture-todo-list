@@ -34,6 +34,10 @@ func main() {
 	DB_CONN := os.Getenv("DB_CONN")
 	SECRET_KEY := os.Getenv("SECRET_KEY")
 	ITEM_LIKE_SERVICE_URL := os.Getenv("ITEM_LIKE_SERVICE_URL")
+	PORT := os.Getenv("PORT")
+	if PORT == "" {
+		PORT = "8000"
+	}
 	if ITEM_LIKE_SERVICE_URL == "" {
 		ITEM_LIKE_SERVICE_URL = "http://localhost:8001" // default for local development
 	}
@@ -115,7 +119,7 @@ func main() {
 			"message": "pong",
 		})
 	})
-	if err := router.Run(":8001"); err != nil {
+	if err := router.Run(":" + PORT); err != nil {
 		log.Fatalln(err.Error())
 	} // listens on 0.0.0.0:8080 by default
 }
